@@ -69,15 +69,12 @@ export async function PATCH(req: Request) {
 
 // 清空全部訂單
 export async function DELETE() {
-  const { error } = await supabase
-    .from("orders")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000") // 避免刪除限制
+  const { error } = await supabase.rpc("truncate_orders")
 
   if (error) {
     console.error("DELETE error:", error)
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
   }
-
   return NextResponse.json({ ok: true })
 }
 // import { NextResponse } from "next/server"
