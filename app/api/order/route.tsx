@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
+import { supabase } from "@/lib/supabase"
 
-let orders: any[] = []
-let counter = 1
-
+// 計算總價
 function calcTotal(items: any[]) {
   return items.reduce((sum, item) => {
     let price = item.basePrice
@@ -14,38 +13,121 @@ function calcTotal(items: any[]) {
   }, 0)
 }
 
+// 取得訂單
 export async function GET() {
-  return NextResponse.json(orders)
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("GET error:", error)
+    return NextResponse.json([])
+  }
+
+  return NextResponse.json(data ?? [])
 }
 
+// 新增訂單
 export async function POST(req: Request) {
   const body = await req.json()
 
-  const newOrder = {
-    id: counter.toString().padStart(3, "0"),
-    items: body.items,
-    total: calcTotal(body.items),
-    status: "pending",
+  const { data, error } = await supabase
+    .from("orders")
+    .insert([
+      {
+        items: body.items,
+        total: calcTotal(body.items),
+        status: "pending",
+      },
+    ])
+    .select()
+
+  if (error) {
+    console.error("POST error:", error)
+    return NextResponse.json({ ok: false })
   }
 
-  counter++
-  orders.unshift(newOrder)
-
-  return NextResponse.json(newOrder)
+  return NextResponse.json(data)
 }
 
+// 取消訂單
 export async function PATCH(req: Request) {
   const { id } = await req.json()
 
-  orders = orders.map((o) =>
-    o.id === id ? { ...o, status: "cancel" } : o
-  )
+  const { error } = await supabase
+    .from("orders")
+    .update({ status: "cancel" })
+    .eq("id", id)
+
+  if (error) {
+    console.error("PATCH error:", error)
+  }
 
   return NextResponse.json({ ok: true })
 }
+
+// 清空全部訂單
 export async function DELETE() {
-  orders = []
-  counter = 1 //（可選）重置單號
+  const { error } = await supabase
+    .from("orders")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000") // 避免刪除限制
+
+  if (error) {
+    console.error("DELETE error:", error)
+  }
 
   return NextResponse.json({ ok: true })
 }
+// import { NextResponse } from "next/server"
+
+// let orders: any[] = []
+// let counter = 1
+
+// function calcTotal(items: any[]) {
+//   return items.reduce((sum, item) => {
+//     let price = item.basePrice
+
+//     if (item.options.large) price += 10
+//     if (item.options.egg) price += 10
+
+//     return sum + price * item.quantity
+//   }, 0)
+// }
+
+// export async function GET() {
+//   return NextResponse.json(orders)
+// }
+
+// export async function POST(req: Request) {
+//   const body = await req.json()
+
+//   const newOrder = {
+//     id: counter.toString().padStart(3, "0"),
+//     items: body.items,
+//     total: calcTotal(body.items),
+//     status: "pending",
+//   }
+
+//   counter++
+//   orders.unshift(newOrder)
+
+//   return NextResponse.json(newOrder)
+// }
+
+// export async function PATCH(req: Request) {
+//   const { id } = await req.json()
+
+//   orders = orders.map((o) =>
+//     o.id === id ? { ...o, status: "cancel" } : o
+//   )
+
+//   return NextResponse.json({ ok: true })
+// }
+// export async function DELETE() {
+//   orders = []
+//   counter = 1 //（可選）重置單號
+
+//   return NextResponse.json({ ok: true })
+// }
