@@ -473,7 +473,7 @@ export default function Page() {
                 onClick={() => done(o.id)}
                 className="rounded-xl"
               >
-                完成訂單
+                完成訂單！
               </Button>
             </div>
           </div>
