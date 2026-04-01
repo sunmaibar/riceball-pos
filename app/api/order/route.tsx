@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+// import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase"
 
 // 計算總價
 function calcTotal(items: any[]) {
@@ -15,7 +16,7 @@ function calcTotal(items: any[]) {
 
 // 取得訂單
 export async function GET() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("orders")
     .select("*")
     .order("created_at", { ascending: false })
@@ -32,7 +33,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const body = await req.json()
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("orders")
     .insert([
       {
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   const { id } = await req.json()
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("orders")
     .update({ status: "cancel" })
     .eq("id", id)
@@ -69,7 +70,10 @@ export async function PATCH(req: Request) {
 
 // 清空全部訂單
 export async function DELETE() {
-  const { error } = await supabase.rpc("truncate_orders")
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .delete()
+    .not("id", "is", null)
 
   if (error) {
     console.error("DELETE error:", error)
