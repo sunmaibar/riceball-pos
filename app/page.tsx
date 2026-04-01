@@ -8,7 +8,9 @@ import {
   removeOptions,
 } from "@/lib/menu"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+// import { Checkbox } from "@/components/ui/checkbox"
+
+
 function cardColor(id: string) {
   const colors = [
     "bg-orange-100",
@@ -17,6 +19,23 @@ function cardColor(id: string) {
     "bg-purple-100",
   ]
   return colors[Number(id) % colors.length]
+}
+
+function playDing() {
+  const ctx = new AudioContext()
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+
+  osc.frequency.value = 880
+  osc.type = "sine"
+  gain.gain.setValueAtTime(0.5, ctx.currentTime)
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8)
+
+  osc.start(ctx.currentTime)
+  osc.stop(ctx.currentTime + 0.8)
 }
 
 
@@ -31,6 +50,8 @@ export default function Page() {
   const [cart, setCart] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const riceRef = useRef<HTMLDivElement>(null)
+  const prevOrderCount = useRef(0)
+  const [cancelledIds, setCancelledIds] = useState<Set<string>>(new Set())
 
   // ===== 工具 =====
   const toggleRice = (k: string) =>
@@ -88,11 +109,23 @@ export default function Page() {
       body: JSON.stringify({ items: cart }),
     })
     setCart([])
+    fetchOrders() // 送出後立刻更新
+
   }
 
   async function fetchOrders() {
     const r = await fetch("/api/order")
-    setOrders(await r.json())
+    const data = await r.json()
+
+    if (data.length > prevOrderCount.current) {
+      playDing()
+    }
+    prevOrderCount.current = data.length
+    setOrders(data)
+
+  }
+  function removeFromCart(idx: number) {
+    setCart(p => p.filter((_, i) => i !== idx))
   }
   async function clearAll() {
     const ok = confirm("確定要清空所有訂單嗎？此操作無法復原")
@@ -112,13 +145,24 @@ export default function Page() {
     return () => clearInterval(t)
   }, [])
 
+  // async function done(id: string) {
+  //   await fetch("/api/order", {
+  //     method: "PATCH",
+  //     body: JSON.stringify({ id }),
+  //   })
+  // }
   async function done(id: string) {
+    setCancelledIds(p => {
+      const next = new Set(p)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
     await fetch("/api/order", {
       method: "PATCH",
       body: JSON.stringify({ id }),
     })
+    fetchOrders()
   }
-
   // ===== UI =====
   return (
     <div className="grid grid-cols-2 h-screen overflow-auto">
@@ -315,8 +359,32 @@ export default function Page() {
 
         {/* 清單 */}
 
-
         <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b flex items-center justify-between">
+            <span className="font-bold text-gray-700">目前點了</span>
+            <span className="text-sm text-gray-400">{cart.length} 項</span>
+          </div>
+          <div className="divide-y">
+            {cart.map((i, idx) => (
+              <div key={idx} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <span className="font-bold">{i.name}</span>
+                  <span className="ml-2 text-sm text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">x{i.quantity}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-gray-800">${itemPrice(i)}</span>
+                  <button
+                    onClick={() => removeFromCart(idx)}
+                    className="text-gray-300 hover:text-red-400 transition text-xl leading-none"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b flex items-center justify-between">
             <span className="font-bold text-gray-700">目前點了</span>
             <span className="text-sm text-gray-400">{cart.length} 項</span>
@@ -332,7 +400,7 @@ export default function Page() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
 
 
@@ -348,12 +416,12 @@ export default function Page() {
             key={o.id}
             className={`rounded-2xl shadow-sm border-2 overflow-hidden transition
         ${cardColor(o.id)}
-        ${o.status === "cancel" ? "opacity-40 grayscale" : ""}`}
+        ${(o.status === "cancel" || cancelledIds.has(o.id)) ? "opacity-40 grayscale" : ""}`}
           >
             {/* 訂單 header */}
             <div className="flex items-center justify-between px-4 py-3 bg-black/5">
               <span className="font-black text-2xl">#{o.id}</span>
-              <span className="bg-red-500 text-white text-lg font-bold px-3 py-1 rounded-full">
+              <span className="bg-pink-500 text-white text-lg font-bold px-3 py-1 rounded-full">
                 {o.items.reduce((s: number, i: any) => s + i.quantity, 0)} 顆
               </span>
             </div>
@@ -367,9 +435,9 @@ export default function Page() {
                     <span className="text-sm text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
                       x{i.quantity}
                     </span>
-                    <div className="flex gap-1 ml-auto">
+                    <div className="flex gap-1 ">
                       {i.rice.map((r: string) => (
-                        <div key={r} className={`w-6 h-6 rounded-full border-2 border-white shadow ${riceColor(r)}`} />
+                        <div key={r} className={`w-7 h-7 rounded-full border-2 border-white shadow ${riceColor(r)}`} />
                       ))}
                     </div>
                   </div>
@@ -399,13 +467,13 @@ export default function Page() {
 
             {/* footer */}
             <div className="flex items-center justify-between px-4 py-3 bg-black/5">
-              <span className="text-2xl font-black">${o.total}</span>
+              <span className="text-lg text-gray-500 font-black">${o.total}</span>
               <Button
                 variant="outline"
                 onClick={() => done(o.id)}
                 className="rounded-xl"
               >
-                取消訂單
+                完成訂單
               </Button>
             </div>
           </div>
