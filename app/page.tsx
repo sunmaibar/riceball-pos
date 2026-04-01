@@ -190,9 +190,9 @@ export default function Page() {
             >
               <span className="font-bold text-lg">{m.name}</span>
               <span className="mt-1 text-sm font-medium text-amber-600">${m.price}</span>
-              {m.type === "indo" && (
+              {/* {m.type === "indo" && (
                 <span className="absolute top-2 right-2 text-xs bg-red-100 text-red-500 px-2 py-0.5 rounded-full">印尼</span>
-              )}
+              )} */}
             </button>
           ))}
         </div>
