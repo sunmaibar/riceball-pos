@@ -53,6 +53,10 @@ export default function Page() {
   }
 
   const total = cart.reduce((s, i) => s + itemPrice(i), 0)
+  // 建一個 key → label 的 map，方便查詢
+  const optionLabelMap = Object.fromEntries(
+    [...removeOptions, ...addOptions].map(({ key, label }) => [key, label])
+  )
 
   // ===== 動作 =====
   function addItem() {
@@ -128,13 +132,13 @@ export default function Page() {
               key={m.name}
               onClick={() => setSelectedItem(m)}
               className={`
-              border p-3 rounded transition
+              border p-3 rounded transition text-2xl
               ${m.type === "indo" ? "bg-red-100" : ""}
               
             
             `}
             >
-              {m.name} ${m.price}
+              {m.name}<span className="text-sm"> ${m.price}</span>
             </button>
           ))}
         </div>
@@ -240,7 +244,7 @@ export default function Page() {
               </div>
 
               <div>
-                🍙 {o.items.reduce((s: number, i: any) => s + i.quantity, 0)}              </div>
+                總數量：<span className="text-2xl bg-red-100">{o.items.reduce((s: number, i: any) => s + i.quantity, 0)} </span>     顆         </div>
             </div>
 
             {o.items.map((i: any, idx: number) => (
@@ -262,6 +266,23 @@ export default function Page() {
                     .filter(([_, v]) => v)
                     .map(([k]) => {
                       const isRemove = k.startsWith("no_")
+                      const label = optionLabelMap[k] ?? k // 找不到就 fallback 顯示 key
+
+                      return (
+                        <span
+                          key={k}
+                          className={`px-2 py-1 rounded text-xl ${isRemove ? "bg-red-200" : "bg-green-200"}`}
+                        >
+                          {label}
+                        </span>
+                      )
+                    })}
+                </div>
+                {/* <div className="flex flex-wrap gap-1 mt-1 text-xs">
+                  {Object.entries(i.options)
+                    .filter(([_, v]) => v)
+                    .map(([k]) => {
+                      const isRemove = k.startsWith("no_")
 
                       return (
                         <span
@@ -274,12 +295,12 @@ export default function Page() {
                         </span>
                       )
                     })}
-                </div>
+                </div> */}
               </div>
             ))}
 
 
-            <div className="font-bold">${o.total}</div>
+            <div className="font-bold text-2xl my-6">${o.total}</div>
 
             <Button onClick={() => done(o.id)}>取消</Button>
           </div>
