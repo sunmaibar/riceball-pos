@@ -1,9 +1,10 @@
 export const menu = [
-  { name: '傳統飯糰', price: 35 },
-  { name: '甜飯糰', price: 35 },
-  { name: '鹹甜飯糰', price: 40 },
-  { name: '泡菜飯糰', price: 50 },
-  { name: '鮪魚玉米飯糰', price: 50 },
+  { name: '傳統飯糰', price: 35, type: 'normal' },
+  { name: '甜飯糰', price: 35, type: 'normal' },
+
+  { name: '青辣椒雞肉', price: 65, type: 'indo' },
+  { name: '巴東牛肉', price: 75, type: 'indo' },
+  { name: '巴東雞肉', price: 65, type: 'indo' },
 ]
 
 export const riceOptions = [
@@ -12,8 +13,16 @@ export const riceOptions = [
   { key: 'yellow', label: '黃' },
 ]
 
-export const options = [
-  { key: 'spicy', label: '🌶️ 加辣' },
-  { key: 'large', label: '🍙 加大' },
-  { key: 'egg', label: '🥚 加蛋' },
+export const addOptions = [
+  { key: 'spicy', label: '🌶️ 加辣', price: 0 },
+  { key: 'large', label: '🍙 加大', price: 10 },
+  { key: 'egg', label: '🥚 加蛋', price: 10 },
+]
+
+export const removeOptions = [
+  { key: 'no_youtiao', label: '不要油條' },
+  { key: 'no_cucumber', label: '不要小黃瓜' },
+  { key: 'no_pickles', label: '不要菜脯' },
+  { key: 'no_kimchi', label: '不要酸菜' },
+  { key: 'no_pork', label: '不要肉鬆' },
 ]
