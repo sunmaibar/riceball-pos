@@ -33,24 +33,61 @@ export async function GET() {
 export async function POST(req: Request) {
   const body = await req.json()
 
+  // 查目前還有幾筆
+  const { count } = await supabaseAdmin
+    .from("orders")
+    .select("*", { count: "exact", head: true })
+
+  // 如果是空的從1開始，否則查最大id
+  let nextId = 1
+  if (count && count > 0) {
+    const { data: latest } = await supabaseAdmin
+      .from("orders")
+      .select("id")
+      .order("id", { ascending: false })
+      .limit(1)
+
+    const lastId = latest?.[0]?.id ?? 0
+    nextId = (lastId % 100) + 1
+  }
+
   const { data, error } = await supabaseAdmin
     .from("orders")
-    .insert([
-      {
-        items: body.items,
-        total: calcTotal(body.items),
-        status: "pending",
-      },
-    ])
+    .insert([{
+      id: nextId,
+      items: body.items,
+      total: calcTotal(body.items),
+      status: "pending",
+    }])
     .select()
 
   if (error) {
     console.error("POST error:", error)
     return NextResponse.json({ ok: false })
   }
-
   return NextResponse.json(data)
 }
+// export async function POST(req: Request) {
+//   const body = await req.json()
+
+//   const { data, error } = await supabaseAdmin
+//     .from("orders")
+//     .insert([
+//       {
+//         items: body.items,
+//         total: calcTotal(body.items),
+//         status: "pending",
+//       },
+//     ])
+//     .select()
+
+//   if (error) {
+//     console.error("POST error:", error)
+//     return NextResponse.json({ ok: false })
+//   }
+
+//   return NextResponse.json(data)
+// }
 
 // 取消訂單
 export async function PATCH(req: Request) {
