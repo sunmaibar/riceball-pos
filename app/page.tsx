@@ -52,6 +52,7 @@ export default function Page() {
   const riceRef = useRef<HTMLDivElement>(null)
   const prevOrderCount = useRef(0)
   const [cancelledIds, setCancelledIds] = useState<Set<string>>(new Set())
+  const [submitting, setSubmitting] = useState(false)
 
   // ===== 工具 =====
   const toggleRice = (k: string) =>
@@ -104,13 +105,19 @@ export default function Page() {
   }
 
   async function submit() {
-    await fetch("/api/order", {
-      method: "POST",
-      body: JSON.stringify({ items: cart }),
-    })
-    setCart([])
-    fetchOrders() // 送出後立刻更新
+    if (submitting) return  // 防止重複
+    setSubmitting(true)
 
+    try {
+      await fetch("/api/order", {
+        method: "POST",
+        body: JSON.stringify({ items: cart }),
+      })
+      setCart([])
+      fetchOrders()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   async function fetchOrders() {

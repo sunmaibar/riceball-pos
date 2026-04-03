@@ -41,8 +41,8 @@ export const addOptions = [
   { key: 'spicy', label: '🌶️ 加辣', price: 0 },
   { key: 'large', label: '🍙 加大', price: 10 },
   { key: 'egg', label: '🥚 加蛋', price: 10 },
-  { key: 'cheese', label: '起司', price: 10 },
-  { key: 'pickle', label: '泡菜', price: 10 },
+  { key: 'cheese', label: '加起司', price: 10 },
+  { key: 'pickle', label: '加泡菜', price: 10 },
   { key: 'Salted-duck-eggs', label: '鹹鴨蛋', price: 15 },
 
   { key: 'eggs', label: '整顆蛋', price: 15 },
