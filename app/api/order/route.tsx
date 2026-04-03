@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server"
 // import { supabase } from "@/lib/supabase"
 import { supabaseAdmin } from "@/lib/supabase"
+import { addOptions } from "@/lib/menu"
 
 // 計算總價
 function calcTotal(items: any[]) {
   return items.reduce((sum, item) => {
     let price = item.basePrice
-
-    if (item.options.large) price += 10
-    if (item.options.egg) price += 10
-
+    addOptions.forEach((o: any) => {
+      if (item.options[o.key]) price += o.price
+    })
     return sum + price * item.quantity
   }, 0)
 }
-
 // 取得訂單
 export async function GET() {
   const { data, error } = await supabaseAdmin

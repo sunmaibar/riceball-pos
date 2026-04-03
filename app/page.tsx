@@ -73,8 +73,9 @@ export default function Page() {
 
   const itemPrice = (i: any) => {
     let p = i.basePrice
-    if (i.options.large) p += 10
-    if (i.options.egg) p += 10
+    addOptions.forEach((o) => {
+      if (i.options[o.key]) p += o.price
+    })
     return p * i.quantity
   }
 
