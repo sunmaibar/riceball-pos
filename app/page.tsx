@@ -55,6 +55,7 @@ export default function Page() {
   const [submitting, setSubmitting] = useState(false)
   const leftPanelRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
+  const isSubmitting = useRef(false)
 
   // ===== 工具 =====
   const toggleRice = (k: string) =>
@@ -98,7 +99,7 @@ export default function Page() {
         options: opts,
       },
     ])
-
+    console.log("cleared in addItem")
     setSelectedItem(null)
     setRice([])
     setOpts({})
@@ -108,12 +109,15 @@ export default function Page() {
   }
 
   async function submit() {
-    if (submitting) return
-    setSubmitting(true)
+    if (isSubmitting.current) return
+
     if (selectedItem) {
       const ok = confirm("還有未加入購物車的項目，確定要直接送出嗎？")
       if (!ok) return
     }
+
+    isSubmitting.current = true
+    setSubmitting(true)
 
     try {
       await fetch("/api/order", {
@@ -129,6 +133,7 @@ export default function Page() {
       leftPanelRef.current?.scrollTo({ top: 0, behavior: "smooth" })
       rightPanelRef.current?.scrollTo({ top: 0, behavior: "smooth" })
     } finally {
+      isSubmitting.current = false
       setSubmitting(false)
     }
   }
@@ -357,7 +362,7 @@ export default function Page() {
                   ＋
                 </button>
               </div>
-              <Button onClick={addItem} className="flex-1">
+              <Button onClick={() => { console.log("加入購物車被點擊"); addItem() }} className="flex-1">
                 加入購物車
               </Button>
             </div>
@@ -426,7 +431,7 @@ export default function Page() {
 
         <div>總價：${total}</div>
 
-        <Button className="w-full text-xl py-6" onClick={submit} disabled={cart.length === 0}>送出訂單</Button>
+        <Button className="w-full text-xl py-6" onClick={submit} disabled={submitting}>{submitting ? "送出中..." : "送出訂單"}</Button>
       </div>
 
       {/* 右：廚房 */}
