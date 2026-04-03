@@ -53,6 +53,8 @@ export default function Page() {
   const prevOrderCount = useRef(0)
   const [cancelledIds, setCancelledIds] = useState<Set<string>>(new Set())
   const [submitting, setSubmitting] = useState(false)
+  const leftPanelRef = useRef<HTMLDivElement>(null)
+  const rightPanelRef = useRef<HTMLDivElement>(null)
 
   // ===== 工具 =====
   const toggleRice = (k: string) =>
@@ -101,12 +103,17 @@ export default function Page() {
     setRice([])
     setOpts({})
     setQty(1)
+    leftPanelRef.current?.scrollTo({ top: 0, behavior: "smooth" })
 
   }
 
   async function submit() {
-    if (submitting) return  // 防止重複
+    if (submitting) return
     setSubmitting(true)
+    if (selectedItem) {
+      const ok = confirm("還有未加入購物車的項目，確定要直接送出嗎？")
+      if (!ok) return
+    }
 
     try {
       await fetch("/api/order", {
@@ -114,7 +121,13 @@ export default function Page() {
         body: JSON.stringify({ items: cart }),
       })
       setCart([])
+      setSelectedItem(null)
+      setRice([])
+      setOpts({})
+      setQty(1)
       fetchOrders()
+      leftPanelRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+      rightPanelRef.current?.scrollTo({ top: 0, behavior: "smooth" })
     } finally {
       setSubmitting(false)
     }
@@ -172,10 +185,10 @@ export default function Page() {
   }
   // ===== UI =====
   return (
-    <div className="grid grid-cols-2 h-screen overflow-auto">
+    <div className="grid grid-cols-2 h-screen">
 
       {/* 左：點餐 */}
-      <div className="p-6 space-y-4 border-r">
+      <div ref={leftPanelRef} className="p-6 space-y-4 border-r overflow-auto h-screen">
         <h1 className="text-xl font-bold">點餐</h1>
 
         {/* 菜單 */}
@@ -417,7 +430,7 @@ export default function Page() {
       </div>
 
       {/* 右：廚房 */}
-      <div className="flex-1 overflow-auto p-6 space-y-4 bg-gray-50">
+      <div ref={rightPanelRef} className="flex-1 overflow-auto p-6 space-y-4 bg-gray-50">
         {orders.map((o) => (
           <div
             key={o.id}
